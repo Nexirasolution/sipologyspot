@@ -24,14 +24,16 @@ export async function POST(req) {
     await connectDB();
     const body = await req.json();
 
-    if (!body.title) {
-      return NextResponse.json({ error: "Title is required." }, { status: 400 });
+    // Only the image is required
+    if (!body.image?.url) {
+      return NextResponse.json({ error: "Please upload a banner image." }, { status: 400 });
     }
 
     const banner = await Banner.create({
-      title: body.title,
+      title: body.title || "",
       subtitle: body.subtitle || "",
-      image: body.image || { url: "", publicId: "" },
+      altText: body.altText || "",
+      image: { url: body.image.url, publicId: body.image.publicId || "" },
       ctaText: body.ctaText || "",
       ctaLink: body.ctaLink || "",
       isActive: body.isActive !== undefined ? body.isActive : true,
