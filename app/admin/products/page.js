@@ -41,43 +41,64 @@ export default function AdminProductsPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [pageError, setPageError] = useState(""); // replaces alert()
+  const [searchInput, setSearchInput] = useState(""); // what the admin is typing
+  const [search, setSearch] = useState(""); // debounced value used for fetching
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  async function loadProducts() {
-    setLoading(true);
-    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
-    if (search) params.set("search", search);
-    const res = await fetch(`/api/products?${params.toString()}`);
-    const data = await res.json();
-    setProducts(data.products || []);
-    setPagination(data.pagination || null);
-    setLoading(false);
-  }
+  const reload = () => setReloadKey((k) => k + 1);
 
+  // Categories (once)
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => r.json())
-      .then((d) => setCategories(d.categories || []));
+      .then((d) => setCategories(d.categories || []))
+      .catch(() => setPageError("Could not load categories."));
   }, []);
 
-  // Reset to page 1 whenever the search term changes
+  // Wait until the admin stops typing, then search from page 1 in a single request
   useEffect(() => {
-    setPage(1);
-  }, [search]);
+    const t = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
+  // Load products. Older in-flight requests are cancelled so a slow response
+  // can never overwrite a newer one.
   useEffect(() => {
-    loadProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search]);
+    const controller = new AbortController();
+
+    async function load() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+        if (search) params.set("search", search);
+        const res = await fetch(`/api/products?${params.toString()}`, { signal: controller.signal });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Could not load products.");
+        setProducts(data.products || []);
+        setPagination(data.pagination || null);
+        setPageError("");
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        setPageError(err.message || "Could not load products.");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
+
+    load();
+    return () => controller.abort();
+  }, [page, search, reloadKey]);
 
   // Builds an SKU like AF-OIL-48213 from the category name + a short unique suffix.
-  // Client-side generation is good enough for a low-volume admin panel, but if two
-  // admins could add products for the same category at the exact same millisecond,
-  // move this logic server-side (in the POST /api/products route) for guaranteed
-  // uniqueness against the database.
+  // Client-side generation is good enough for a low-volume admin panel; the server
+  // still rejects duplicates, and the ↻ button generates a new one.
   function generateSKU(categoryId) {
     const cat = categories.find((c) => c._id === categoryId);
     const catCode = cat
@@ -174,12 +195,14 @@ export default function AdminProductsPage() {
     setError("");
     try {
       if (form.hasVariants) {
-        const missingLabel = form.variants.some((v) => !String(v.label || "").trim());
-        if (missingLabel) {
-          throw new Error("Every variant needs a label (e.g. 100g, 500g).");
-        }
         if (form.variants.length === 0) {
           throw new Error("Add at least one variant, or turn off variants for this product.");
+        }
+        if (form.variants.some((v) => !String(v.label || "").trim())) {
+          throw new Error("Every variant needs a label (e.g. 100g, 500g).");
+        }
+        if (form.variants.some((v) => String(v.price ?? "").trim() === "")) {
+          throw new Error("Every variant needs a price.");
         }
       }
 
@@ -210,7 +233,8 @@ export default function AdminProductsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save product.");
       setModalOpen(false);
-      loadProducts();
+      setPageError("");
+      reload();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -218,14 +242,21 @@ export default function AdminProductsPage() {
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm("Delete this product? This cannot be undone.")) return;
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
-    // If this was the last item on the current page, step back a page
-    if (products.length === 1 && page > 1) {
-      setPage((p) => p - 1);
-    } else {
-      loadProducts();
+  async function handleDelete(product) {
+    if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/products/${product._id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not delete the product.");
+      setPageError("");
+      // If this was the last item on the current page, step back a page
+      if (products.length === 1 && page > 1) {
+        setPage((n) => n - 1);
+      } else {
+        reload();
+      }
+    } catch (err) {
+      setPageError(err.message);
     }
   }
 
@@ -250,8 +281,8 @@ export default function AdminProductsPage() {
 
   // --- Display helpers ---
 
-  // Returns a compact price string for the table/cards: a single price for
-  // simple products, or a "from X" range for variant products.
+  // Compact price for the table/cards: a single price for simple products,
+  // or a "From X" range for variant products.
   function displayPrice(p) {
     if (p.hasVariants && p.variants?.length) {
       const prices = p.variants.map((v) => v.price);
@@ -262,7 +293,7 @@ export default function AdminProductsPage() {
     return `₹${p.price}`;
   }
 
-  // Returns total stock across variants (or the base stock for simple products).
+  // Total stock across variants (or the base stock for simple products).
   function displayStock(p) {
     if (p.hasVariants && p.variants?.length) {
       return p.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
@@ -283,6 +314,7 @@ export default function AdminProductsPage() {
     // omitting `page` and `limit` makes the API return the full unpaginated list
     const res = await fetch(`/api/products?${params.toString()}`);
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Could not load products for export.");
     return data.products || [];
   }
 
@@ -328,10 +360,11 @@ export default function AdminProductsPage() {
 
   async function exportExcel() {
     setExporting(true);
+    setPageError("");
     try {
       const list = await fetchAllProductsForExport();
       if (list.length === 0) {
-        alert("No products to export.");
+        setPageError("No products to export.");
         return;
       }
       const rows = buildExportRows(list);
@@ -346,7 +379,7 @@ export default function AdminProductsPage() {
         { wch: 10 }, // Price
         { wch: 14 }, // Compare Price
         { wch: 10 }, // Unit
-        { wch: 8 },  // Stock
+        { wch: 8 }, // Stock
         { wch: 10 }, // Low Stock Threshold
         { wch: 10 }, // Status
         { wch: 10 }, // Featured
@@ -360,7 +393,7 @@ export default function AdminProductsPage() {
       XLSX.writeFile(workbook, `products-${dateStr}.xlsx`);
     } catch (err) {
       console.error(err);
-      alert("Failed to export Excel file.");
+      setPageError(err.message || "Failed to export Excel file.");
     } finally {
       setExporting(false);
     }
@@ -368,10 +401,11 @@ export default function AdminProductsPage() {
 
   async function exportPDF() {
     setExporting(true);
+    setPageError("");
     try {
       const list = await fetchAllProductsForExport();
       if (list.length === 0) {
-        alert("No products to export.");
+        setPageError("No products to export.");
         return;
       }
 
@@ -386,9 +420,12 @@ export default function AdminProductsPage() {
       doc.setTextColor(80, 80, 80);
       doc.text("Product List", pageWidth / 2, 23, { align: "center" });
       doc.setFontSize(9);
-      doc.text(`Generated on ${new Date().toLocaleDateString("en-IN")} · ${list.length} products`, pageWidth / 2, 29, {
-        align: "center",
-      });
+      doc.text(
+        `Generated on ${new Date().toLocaleDateString("en-IN")} - ${list.length} products`,
+        pageWidth / 2,
+        29,
+        { align: "center" }
+      );
 
       const body = [];
       list.forEach((p) => {
@@ -419,7 +456,8 @@ export default function AdminProductsPage() {
 
       autoTable(doc, {
         startY: 36,
-        head: [["SKU", "Name", "Category", "Price (₹)", "Stock", "Status", "Featured"]],
+        // jsPDF's built-in font has no ₹ glyph (it prints as garbage), so use "Rs."
+        head: [["SKU", "Name", "Category", "Price (Rs.)", "Stock", "Status", "Featured"]],
         body,
         theme: "grid",
         headStyles: { fillColor: [184, 146, 63] },
@@ -433,7 +471,7 @@ export default function AdminProductsPage() {
       doc.save(`products-${dateStr}.pdf`);
     } catch (err) {
       console.error(err);
-      alert("Failed to export PDF.");
+      setPageError(err.message || "Failed to export PDF.");
     } finally {
       setExporting(false);
     }
@@ -451,15 +489,17 @@ export default function AdminProductsPage() {
         </div>
 
         <input
-          type="text"
+          type="search"
+          aria-label="Search products by name or SKU"
           placeholder="Search by name or SKU..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="w-full rounded-full border border-gold/30 bg-white px-4 py-2.5 text-sm outline-none focus:border-forest sm:max-w-xs"
         />
 
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
           <button
+            type="button"
             onClick={exportExcel}
             disabled={exporting}
             className="rounded-full border border-gold/40 px-4 py-2 text-xs font-semibold text-gold-dark hover:bg-gold/5 disabled:opacity-50 sm:px-5 sm:text-sm"
@@ -467,6 +507,7 @@ export default function AdminProductsPage() {
             {exporting ? "Exporting..." : "Export Excel"}
           </button>
           <button
+            type="button"
             onClick={exportPDF}
             disabled={exporting}
             className="rounded-full border border-gold/40 px-4 py-2 text-xs font-semibold text-gold-dark hover:bg-gold/5 disabled:opacity-50 sm:px-5 sm:text-sm"
@@ -474,6 +515,7 @@ export default function AdminProductsPage() {
             {exporting ? "Exporting..." : "Export PDF"}
           </button>
           <button
+            type="button"
             onClick={() => setBulkOpen(true)}
             disabled={categories.length === 0}
             className="rounded-full border border-forest px-4 py-2 text-xs font-semibold text-forest hover:bg-forest/5 disabled:opacity-50 sm:px-6 sm:text-sm"
@@ -482,6 +524,7 @@ export default function AdminProductsPage() {
             Bulk Upload
           </button>
           <button
+            type="button"
             onClick={openAdd}
             disabled={categories.length === 0}
             className="rounded-full bg-forest px-4 py-2 text-xs font-semibold text-ivory shadow-soft hover:bg-forest-light disabled:opacity-50 sm:px-6 sm:text-sm"
@@ -491,6 +534,12 @@ export default function AdminProductsPage() {
           </button>
         </div>
       </div>
+
+      {pageError && (
+        <p role="alert" className="mt-4 rounded-xl border border-terracotta/40 bg-terracotta/5 px-4 py-2 text-sm text-terracotta">
+          {pageError}
+        </p>
+      )}
 
       {/* Desktop / tablet table */}
       <div className="mt-6 hidden overflow-x-auto rounded-xl2 border border-gold/15 bg-white shadow-card md:block">
@@ -508,47 +557,52 @@ export default function AdminProductsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted">Loading...</td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                  Loading...
+                </td>
+              </tr>
             ) : products.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted">
-                {search ? "No products match your search." : "No products yet. Add your first product."}
-              </td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                  {search ? "No products match your search." : "No products yet. Add your first product."}
+                </td>
+              </tr>
             ) : (
               products.map((p) => (
                 <tr key={p._id} className="border-b border-gold/10 last:border-0">
                   <td className="px-4 py-3 font-mono text-xs text-ink/70">{p.sku}</td>
-                  <td className="flex items-center gap-3 px-4 py-3">
-                    <div className="h-10 w-10 overflow-hidden rounded-lg bg-champagne">
-                     {p.media?.[0] &&
-                        (p.media[0].type === "video" ? (
-                          <video
-                            src={p.media[0].url}
-                            className="h-full w-full object-cover"
-                            muted
-                          />
-                        ) : (
-                          <Image
-                            src={p.media[0].url}
-                            alt=""
-                            width={40}
-                            height={40}
-                            className="h-full w-full object-cover"
-                          />
-                        ))}
-                    </div>
-                    <div>
-                      <span className="font-medium text-ink">{p.name}</span>
-                      <div className="mt-0.5 flex flex-wrap gap-1">
-                        {p.hasVariants && p.variants?.length > 0 && (
-                          <span className="rounded-full bg-champagne px-2 py-0.5 text-[10px] font-semibold text-gold-dark">
-                            {p.variants.length} variant{p.variants.length > 1 ? "s" : ""}
-                          </span>
-                        )}
-                        {p.isFeatured && (
-                          <span className="rounded-full bg-forest/10 px-2 py-0.5 text-[10px] font-semibold text-forest">
-                            ★ Best Seller{p.featuredOrder ? ` #${p.featuredOrder}` : ""}
-                          </span>
-                        )}
+                  <td className="px-4 py-3">
+                    {/* flex lives on an inner div: display:flex on a <td> breaks the table columns */}
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-champagne">
+                        {p.media?.[0] &&
+                          (p.media[0].type === "video" ? (
+                            <video src={p.media[0].url} className="h-full w-full object-cover" muted preload="metadata" />
+                          ) : (
+                            <Image
+                              src={p.media[0].url}
+                              alt=""
+                              width={40}
+                              height={40}
+                              className="h-full w-full object-cover"
+                            />
+                          ))}
+                      </div>
+                      <div>
+                        <span className="font-medium text-ink">{p.name}</span>
+                        <div className="mt-0.5 flex flex-wrap gap-1">
+                          {p.hasVariants && p.variants?.length > 0 && (
+                            <span className="rounded-full bg-champagne px-2 py-0.5 text-[10px] font-semibold text-gold-dark">
+                              {p.variants.length} variant{p.variants.length > 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {p.isFeatured && (
+                            <span className="rounded-full bg-forest/10 px-2 py-0.5 text-[10px] font-semibold text-forest">
+                              ★ Best Seller{p.featuredOrder ? ` #${p.featuredOrder}` : ""}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -560,13 +614,31 @@ export default function AdminProductsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${p.isActive ? "bg-forest/10 text-forest" : "bg-muted/10 text-muted"}`}>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${
+                        p.isActive ? "bg-forest/10 text-forest" : "bg-muted/10 text-muted"
+                      }`}
+                    >
                       {p.isActive ? "Active" : "Hidden"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => openEdit(p)} className="mr-3 text-xs font-semibold text-forest hover:underline">Edit</button>
-                    <button onClick={() => handleDelete(p._id)} className="text-xs font-semibold text-terracotta hover:underline">Delete</button>
+                    <button
+                      type="button"
+                      onClick={() => openEdit(p)}
+                      aria-label={`Edit ${p.name}`}
+                      className="mr-3 text-xs font-semibold text-forest hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p)}
+                      aria-label={`Delete ${p.name}`}
+                      className="text-xs font-semibold text-terracotta hover:underline"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))
@@ -587,15 +659,12 @@ export default function AdminProductsPage() {
           </div>
         ) : (
           products.map((p) => (
-            <div
-              key={p._id}
-              className="rounded-xl2 border border-gold/15 bg-white p-4 shadow-card"
-            >
+            <div key={p._id} className="rounded-xl2 border border-gold/15 bg-white p-4 shadow-card">
               <div className="flex items-start gap-3">
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-champagne">
                   {p.media?.[0] &&
                     (p.media[0].type === "video" ? (
-                      <video src={p.media[0].url} className="h-full w-full object-cover" muted />
+                      <video src={p.media[0].url} className="h-full w-full object-cover" muted preload="metadata" />
                     ) : (
                       <Image
                         src={p.media[0].url}
@@ -643,10 +712,20 @@ export default function AdminProductsPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <button onClick={() => openEdit(p)} className="text-xs font-semibold text-forest hover:underline">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(p)}
+                    aria-label={`Edit ${p.name}`}
+                    className="text-xs font-semibold text-forest hover:underline"
+                  >
                     Edit
                   </button>
-                  <button onClick={() => handleDelete(p._id)} className="text-xs font-semibold text-terracotta hover:underline">
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(p)}
+                    aria-label={`Delete ${p.name}`}
+                    className="text-xs font-semibold text-terracotta hover:underline"
+                  >
                     Delete
                   </button>
                 </div>
@@ -657,13 +736,14 @@ export default function AdminProductsPage() {
       </div>
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+        <nav aria-label="Pagination" className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
           <p className="text-xs text-muted">
             Showing {(pagination.page - 1) * pagination.limit + 1}–
             {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} products
           </p>
           <div className="flex flex-wrap items-center justify-center gap-1.5">
             <button
+              type="button"
               onClick={() => goToPage(page - 1)}
               disabled={page === 1}
               className="rounded-full border border-gold/30 px-3 py-1.5 text-xs font-semibold text-ink/70 hover:bg-champagne disabled:cursor-not-allowed disabled:opacity-40"
@@ -678,12 +758,13 @@ export default function AdminProductsPage() {
                 </span>
               ) : (
                 <button
+                  type="button"
                   key={p}
                   onClick={() => goToPage(p)}
+                  aria-label={`Page ${p}`}
+                  aria-current={p === page ? "page" : undefined}
                   className={`h-8 w-8 rounded-full text-xs font-semibold transition ${
-                    p === page
-                      ? "bg-forest text-ivory"
-                      : "border border-gold/30 text-ink/70 hover:bg-champagne"
+                    p === page ? "bg-forest text-ivory" : "border border-gold/30 text-ink/70 hover:bg-champagne"
                   }`}
                 >
                   {p}
@@ -692,6 +773,7 @@ export default function AdminProductsPage() {
             )}
 
             <button
+              type="button"
               onClick={() => goToPage(page + 1)}
               disabled={page === totalPages}
               className="rounded-full border border-gold/30 px-3 py-1.5 text-xs font-semibold text-ink/70 hover:bg-champagne disabled:cursor-not-allowed disabled:opacity-40"
@@ -699,7 +781,7 @@ export default function AdminProductsPage() {
               Next &rarr;
             </button>
           </div>
-        </div>
+        </nav>
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editingId ? "Edit Product" : "Add Product"} wide>
@@ -722,6 +804,7 @@ export default function AdminProductsPage() {
                     onClick={() => setForm((f) => ({ ...f, sku: generateSKU(f.category) }))}
                     className="shrink-0 rounded-xl border border-gold/30 px-3 py-2.5 text-xs font-semibold text-forest hover:bg-champagne"
                     title="Generate a new SKU"
+                    aria-label="Generate a new SKU"
                   >
                     ↻
                   </button>
@@ -750,7 +833,9 @@ export default function AdminProductsPage() {
             >
               <option value="">Select category</option>
               {categories.map((c) => (
-                <option key={c._id} value={c._id}>{c.name}</option>
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
               ))}
             </select>
           </label>
@@ -763,7 +848,12 @@ export default function AdminProductsPage() {
               value={form.price}
               onChange={(v) => setForm({ ...form, price: v })}
             />
-            <FormField label="Compare Price" type="number" value={form.compareAtPrice} onChange={(v) => setForm({ ...form, compareAtPrice: v })} />
+            <FormField
+              label="Compare Price"
+              type="number"
+              value={form.compareAtPrice}
+              onChange={(v) => setForm({ ...form, compareAtPrice: v })}
+            />
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-ink/70">Unit</span>
               <select
@@ -772,7 +862,9 @@ export default function AdminProductsPage() {
                 className="w-full rounded-xl border border-gold/30 px-4 py-2.5 text-sm outline-none focus:border-forest"
               >
                 {VARIANT_UNITS.map((u) => (
-                  <option key={u} value={u}>{u}</option>
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
                 ))}
               </select>
             </label>
@@ -808,7 +900,7 @@ export default function AdminProductsPage() {
                 )}
 
                 {form.variants.map((v, i) => (
-                  <div key={i} className="grid grid-cols-2 gap-2 rounded-xl border border-gold/15 p-3 sm:grid-cols-6">
+                  <div key={v._id || i} className="grid grid-cols-2 gap-2 rounded-xl border border-gold/15 p-3 sm:grid-cols-6">
                     <label className="block sm:col-span-2">
                       <span className="mb-1 block text-[11px] font-semibold text-ink/60">Label</span>
                       <input
@@ -823,6 +915,8 @@ export default function AdminProductsPage() {
                       <span className="mb-1 block text-[11px] font-semibold text-ink/60">Value</span>
                       <input
                         type="number"
+                        min="0"
+                        step="any"
                         placeholder="500"
                         value={v.value}
                         onChange={(e) => updateVariant(i, { value: e.target.value })}
@@ -837,7 +931,9 @@ export default function AdminProductsPage() {
                         className="w-full rounded-lg border border-gold/30 px-2 py-1.5 text-sm outline-none focus:border-forest"
                       >
                         {VARIANT_UNITS.map((u) => (
-                          <option key={u} value={u}>{u}</option>
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
                         ))}
                       </select>
                     </label>
@@ -845,6 +941,8 @@ export default function AdminProductsPage() {
                       <span className="mb-1 block text-[11px] font-semibold text-ink/60">Price (₹)</span>
                       <input
                         type="number"
+                        min="0"
+                        step="any"
                         value={v.price}
                         onChange={(e) => updateVariant(i, { price: e.target.value })}
                         className="w-full rounded-lg border border-gold/30 px-2 py-1.5 text-sm outline-none focus:border-forest"
@@ -854,6 +952,8 @@ export default function AdminProductsPage() {
                       <span className="mb-1 block text-[11px] font-semibold text-ink/60">Stock</span>
                       <input
                         type="number"
+                        min="0"
+                        step="1"
                         value={v.stock}
                         onChange={(e) => updateVariant(i, { stock: e.target.value })}
                         className="w-full rounded-lg border border-gold/30 px-2 py-1.5 text-sm outline-none focus:border-forest"
@@ -874,6 +974,8 @@ export default function AdminProductsPage() {
                       <span className="mb-1 block text-[11px] font-semibold text-ink/60">Compare Price</span>
                       <input
                         type="number"
+                        min="0"
+                        step="any"
                         value={v.compareAtPrice || ""}
                         onChange={(e) => updateVariant(i, { compareAtPrice: e.target.value })}
                         className="w-full rounded-lg border border-gold/30 px-2 py-1.5 text-sm outline-none focus:border-forest"
@@ -922,51 +1024,58 @@ export default function AdminProductsPage() {
             />
           </label>
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-ink/70">Product Images / Videos</span>
-              <MediaUploader
-                media={form.media}
-                onChange={(media) =>
-                  setForm({
-                    ...form,
-                    media,
-                  })
-                }
-              />          
-              </label>
+          {/* A <div>, not a <label>: a label around the uploader forwards clicks
+              (e.g. on a remove button) to the first control and reopens the file picker */}
+          <div role="group" aria-labelledby="product-media-label">
+            <span id="product-media-label" className="mb-1 block text-xs font-semibold text-ink/70">
+              Product Images / Videos
+            </span>
+            <MediaUploader media={form.media} onChange={(media) => setForm({ ...form, media })} />
+          </div>
 
           <div className="rounded-xl2 border border-gold/20 p-4">
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} />
+              <input
+                type="checkbox"
+                checked={form.isFeatured}
+                onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
+              />
               Featured on homepage (shows in "Best Selling Products")
             </label>
 
             {form.isFeatured && (
               <label className="mt-3 block max-w-[200px]">
-                <span className="mb-1 block text-xs font-semibold text-ink/70">
-                  Display order
-                </span>
+                <span className="mb-1 block text-xs font-semibold text-ink/70">Display order</span>
                 <input
                   type="number"
                   min="0"
+                  step="1"
                   value={form.featuredOrder}
                   onChange={(e) => setForm({ ...form, featuredOrder: e.target.value })}
                   className="w-full rounded-xl border border-gold/30 px-4 py-2.5 text-sm outline-none focus:border-forest"
                 />
                 <span className="mt-1 block text-[11px] text-muted">
-                  Lower numbers show first on the homepage. Products with the same
-                  number (or left at 0) show newest first.
+                  Lower numbers show first on the homepage. Products with the same number (or left at 0) show newest
+                  first.
                 </span>
               </label>
             )}
 
             <label className="mt-4 flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              />
               Active (visible in store)
             </label>
           </div>
 
-          {error && <p className="text-sm text-terracotta">{error}</p>}
+          {error && (
+            <p role="alert" className="text-sm text-terracotta">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"
@@ -978,16 +1087,13 @@ export default function AdminProductsPage() {
         </form>
       </Modal>
 
-      <BulkUploadModal
-        open={bulkOpen}
-        onClose={() => setBulkOpen(false)}
-        onDone={loadProducts}
-      />
+      <BulkUploadModal open={bulkOpen} onClose={() => setBulkOpen(false)} onDone={reload} />
     </div>
   );
 }
 
 function FormField({ label, value, onChange, required, type = "text", placeholder }) {
+  const isNumber = type === "number";
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-semibold text-ink/70">
@@ -998,6 +1104,9 @@ function FormField({ label, value, onChange, required, type = "text", placeholde
         required={required}
         value={value}
         placeholder={placeholder}
+        // step="any" lets prices like 49.50 pass browser validation (the default step is 1)
+        min={isNumber ? 0 : undefined}
+        step={isNumber ? "any" : undefined}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-gold/30 px-4 py-2.5 text-sm outline-none focus:border-forest"
       />

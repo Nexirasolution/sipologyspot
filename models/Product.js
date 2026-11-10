@@ -2,19 +2,9 @@ import mongoose from "mongoose";
 
 const MediaSchema = new mongoose.Schema(
   {
-    url: {
-      type: String,
-      required: true,
-    },
-    publicId: {
-      type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-      enum: ["image", "video"],
-      default: "image",
-    },
+    url: { type: String, required: true },
+    publicId: { type: String, required: true },
+    type: { type: String, enum: ["image", "video"], default: "image" },
   },
   { _id: false }
 );
@@ -23,16 +13,16 @@ const MediaSchema = new mongoose.Schema(
 const VariantSchema = new mongoose.Schema(
   {
     label: { type: String, required: true, trim: true }, // "100g", "500ml", "1kg"
-    value: { type: Number, required: true },              // 100, 500, 1
+    value: { type: Number, required: true, min: 0 }, // 100, 500, 1
     unit: {
       type: String,
       enum: ["gram", "kg", "ml", "litre", "piece"],
       required: true,
     },
     sku: { type: String, trim: true, uppercase: true }, // optional per-variant SKU
-    price: { type: Number, required: true },
-    compareAtPrice: { type: Number, default: 0 },
-    stock: { type: Number, default: 0 },
+    price: { type: Number, required: true, min: [0, "Price cannot be negative."] },
+    compareAtPrice: { type: Number, default: 0, min: 0 },
+    stock: { type: Number, default: 0, min: [0, "Stock cannot be negative."] },
     isDefault: { type: Boolean, default: false }, // pre-selected on the product page
   },
   { _id: true } // keep _id so the cart can reference a specific variant
@@ -55,35 +45,30 @@ const ProductSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
+      index: true,
     },
 
-    // Base price/stock/unit. Used directly when hasVariants is false, and act
+    // Base price/stock/unit. Used directly when hasVariants is false, and acts
     // as a fallback / "starting from" figure when the product has variants.
-    price: { type: Number, required: true },
-    compareAtPrice: { type: Number, default: 0 },
+    price: { type: Number, required: true, min: [0, "Price cannot be negative."] },
+    compareAtPrice: { type: Number, default: 0, min: 0 },
     unit: { type: String, default: "piece" },
-    stock: { type: Number, default: 0 },
-    lowStockThreshold: { type: Number, default: 5 },
+    stock: { type: Number, default: 0, min: [0, "Stock cannot be negative."] },
+    lowStockThreshold: { type: Number, default: 5, min: 0 },
 
     // Size / weight / quantity variants
     hasVariants: { type: Boolean, default: false },
     variants: { type: [VariantSchema], default: [] },
 
     // Images + Videos
-    media: {
-      type: [MediaSchema],
-      default: [],
-    },
+    media: { type: [MediaSchema], default: [] },
 
     tags: { type: [String], default: [] },
 
     isFeatured: { type: Boolean, default: false },
-    // Controls display order within the homepage "Best Selling" section.
-    // Lower numbers show first. Only meaningful when isFeatured is true;
-    // products with the same value (e.g. the default 0) fall back to
-    // newest-first so newly-featured products still show up somewhere
-    // sensible before an admin assigns them a real position.
-    featuredOrder: { type: Number, default: 0 },
+    // Order within the homepage "Best Selling" section. Lower numbers show first;
+    // products with the same value fall back to newest first.
+    featuredOrder: { type: Number, default: 0, min: 0 },
     isActive: { type: Boolean, default: true },
 
     attributes: {
@@ -101,5 +86,4 @@ ProductSchema.index({
   tags: "text",
 });
 
-export default mongoose.models.Product ||
-  mongoose.model("Product", ProductSchema);
+export default mongoose.models.Product || mongoose.model("Product", ProductSchema);

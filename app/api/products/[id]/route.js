@@ -3,53 +3,36 @@ import { connectDB } from "@/lib/mongodb";
 import Product from "@/models/Product";
 import "@/models/Category";
 import { deleteMediaFromCloudinary } from "@/lib/cloudinary";
+import {
+  isObjectId,
+  normalizeMedia,
+  normalizeVariants,
+  pickProductFields,
+  findSkuConflict,
+  writeErrorResponse,
+} from "@/lib/productHelpers";
 
-function normalizeMedia(media) {
-  if (!Array.isArray(media)) return undefined;
-  return media.map((item) => ({
-    url: item.url,
-    publicId: item.publicId,
-    type: item.type || item.mediaType || "image",
-  }));
-}
-
-// Cleans up incoming variant rows from the admin form: coerces numbers,
-// drops rows without a label, and normalizes the SKU casing.
-function normalizeVariants(variants) {
-  if (!Array.isArray(variants)) return undefined;
-  const cleaned = variants
-    .filter((v) => v && String(v.label || "").trim())
-    .map((v) => ({
-      // Keep the existing _id when editing so cart references / order
-      // history that point at a specific variant don't get orphaned.
-      _id: v._id || undefined,
-      label: String(v.label).trim(),
-      value: Number(v.value) || 0,
-      unit: v.unit || "piece",
-      sku: v.sku ? String(v.sku).trim().toUpperCase() : undefined,
-      price: Number(v.price) || 0,
-      compareAtPrice: Number(v.compareAtPrice) || 0,
-      stock: Number(v.stock) || 0,
-      isDefault: !!v.isDefault,
-    }));
-
-  if (cleaned.length && !cleaned.some((v) => v.isDefault)) {
-    cleaned[0].isDefault = true;
-  }
-  return cleaned;
-}
+const NOT_FOUND = () => NextResponse.json({ error: "Product not found." }, { status: 404 });
 
 export async function GET(req, { params }) {
   try {
     await connectDB();
     const { id } = await params;
-    const product =
-      (await Product.findById(id).populate("category", "name slug")) ||
-      (await Product.findOne({ slug: id }).populate("category", "name slug"));
 
-    if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    // findById throws on a non-ObjectId string, so only use it for real ids
+    // and fall back to the slug lookup otherwise.
+    let product = null;
+    if (isObjectId(id)) {
+      product = await Product.findById(id).populate("category", "name slug");
+    }
+    if (!product) {
+      product = await Product.findOne({ slug: String(id).toLowerCase() }).populate("category", "name slug");
+    }
+
+    if (!product) return NOT_FOUND();
     return NextResponse.json({ product });
   } catch (err) {
+    console.error(err);
     return NextResponse.json({ error: "Failed to fetch product." }, { status: 500 });
   }
 }
@@ -58,62 +41,67 @@ export async function PUT(req, { params }) {
   try {
     await connectDB();
     const { id } = await params;
+    if (!isObjectId(id)) return NOT_FOUND();
+
+    const existing = await Product.findById(id);
+    if (!existing) return NOT_FOUND();
+
     const body = await req.json();
 
-    if (body.media) {
-      body.media = normalizeMedia(body.media);
+    const { data, error } = pickProductFields(body);
+    if (error) return NextResponse.json({ error }, { status: 400 });
+    if (data.name !== undefined && !data.name) {
+      return NextResponse.json({ error: "Product name cannot be empty." }, { status: 400 });
     }
 
-    if (body.variants) {
-      body.variants = normalizeVariants(body.variants);
+    if (body.media !== undefined) {
+      const media = normalizeMedia(body.media);
+      if (media) data.media = media;
+    }
 
-      const variantSkus = body.variants.map((v) => v.sku).filter(Boolean);
-      if (variantSkus.length) {
-        const dupVariantSku = await Product.findOne({
-          _id: { $ne: id },
-          $or: [
-            { sku: { $in: variantSkus } },
-            { "variants.sku": { $in: variantSkus } },
-          ],
-        });
-        if (dupVariantSku) {
-          return NextResponse.json(
-            { error: "One or more variant SKUs are already in use." },
-            { status: 400 }
-          );
-        }
-      }
+    if (body.variants !== undefined) {
+      const { variants, error: variantError } = normalizeVariants(body.variants);
+      if (variantError) return NextResponse.json({ error: variantError }, { status: 400 });
+      data.variants = variants || [];
     }
 
     if (body.hasVariants !== undefined) {
-      body.hasVariants = !!body.hasVariants && (body.variants?.length > 0);
+      const list = data.variants ?? existing.variants;
+      data.hasVariants = !!body.hasVariants && list.length > 0;
     }
 
+    let sku = existing.sku;
     if (body.sku !== undefined) {
-      const sku = String(body.sku).trim().toUpperCase();
-      if (!sku) {
-        return NextResponse.json({ error: "SKU is required." }, { status: 400 });
-      }
-      const dupSku = await Product.findOne({ sku, _id: { $ne: id } });
-      if (dupSku) {
-        return NextResponse.json({ error: `SKU "${sku}" is already in use.` }, { status: 400 });
-      }
-      body.sku = sku;
+      sku = String(body.sku).trim().toUpperCase();
+      if (!sku) return NextResponse.json({ error: "SKU is required." }, { status: 400 });
+      data.sku = sku;
     }
 
-    try {
-      const product = await Product.findByIdAndUpdate(id, body, { new: true, runValidators: true });
-      if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
-      return NextResponse.json({ product });
-    } catch (err) {
-      if (err.code === 11000) {
-        return NextResponse.json({ error: "SKU must be unique." }, { status: 400 });
-      }
-      throw err;
+    if (data.sku !== undefined || data.variants !== undefined) {
+      const variantSkus = (data.variants ?? existing.variants).map((v) => v.sku).filter(Boolean);
+      const conflict = await findSkuConflict({ sku, variantSkus, excludeId: id });
+      if (conflict) return NextResponse.json({ error: conflict }, { status: 400 });
     }
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true, runValidators: true }
+    );
+    if (!product) return NOT_FOUND();
+
+    // Remove images/videos the admin took out of the product, so they don't pile up in Cloudinary
+    if (data.media) {
+      const kept = new Set(data.media.map((m) => m.publicId));
+      const removed = (existing.media || []).filter((m) => m.publicId && !kept.has(m.publicId));
+      await Promise.allSettled(
+        removed.map((m) => deleteMediaFromCloudinary(m.publicId, m.type || "image"))
+      );
+    }
+
+    return NextResponse.json({ product });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to update product." }, { status: 500 });
+    return writeErrorResponse(err, "Failed to update product.");
   }
 }
 
@@ -121,28 +109,19 @@ export async function DELETE(req, { params }) {
   try {
     await connectDB();
     const { id } = await params;
+    if (!isObjectId(id)) return NOT_FOUND();
+
     const product = await Product.findById(id);
+    if (!product) return NOT_FOUND();
 
-    if (!product) {
-      return NextResponse.json({ error: "Product not found." }, { status: 404 });
-    }
-
-    if (product.media?.length) {
-      await Promise.all(
-        product.media.map((item) =>
-          deleteMediaFromCloudinary(item.publicId, item.type || "image")
-        )
-      );
-    }
-
-    if (product.images?.length) {
-      await Promise.all(
-        product.images.map((item) => deleteMediaFromCloudinary(item.publicId, "image"))
-      );
-    }
+    // A Cloudinary hiccup should not stop the product from being deleted
+    const cleanup = [
+      ...(product.media || []).map((item) => deleteMediaFromCloudinary(item.publicId, item.type || "image")),
+      ...(product.images || []).map((item) => deleteMediaFromCloudinary(item.publicId, "image")),
+    ];
+    await Promise.allSettled(cleanup);
 
     await product.deleteOne();
-
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Delete product error:", err);
