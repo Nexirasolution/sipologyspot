@@ -9,7 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import Reveal from "@/components/Reveal";
 import { LeafIcon } from "@/components/Icons";
 import HeroSlider from "@/components/HeroSlider";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { getSettings } from "@/lib/settings";
 export const dynamic = "force-dynamic";
 
@@ -85,7 +85,7 @@ export default async function HomePage() {
 
         <HeroSlider />
 
-        {/* Categories: arch gallery */}
+        {/* Categories: circle gallery */}
         <section
           aria-labelledby="categories-heading"
           className="mx-auto max-w-7xl py-14 md:px-8 md:py-24"
@@ -121,17 +121,16 @@ export default async function HomePage() {
                   delay={Math.min(i, 8) * 90}
                   className="w-[42vw] shrink-0 snap-start sm:w-[28vw] md:w-auto"
                 >
-                  {/* Every second arch sits lower, so the row reads as a wave on desktop */}
-                  <div className={i % 2 === 1 ? "md:mt-12" : ""}>
+                  <div>
                     <Link href={`/products?category=${cat._id}`} className="group block">
-                      <span className="relative block aspect-[3/4] w-full">
-                        {/* Gold outline arch, offset behind the photo */}
+                      <span className="relative block aspect-square w-full">
+                        {/* Gold outline circle, offset behind the photo */}
                         <span
                           aria-hidden="true"
-                          className="absolute inset-0 translate-x-2 translate-y-2 rounded-t-full border-2 border-gold transition-transform duration-500 ease-out group-hover:translate-x-3.5 group-hover:translate-y-3.5 group-focus-visible:translate-x-3.5 group-focus-visible:translate-y-3.5"
+                          className="absolute inset-0 translate-x-2 translate-y-2 rounded-full border-2 border-gold transition-transform duration-500 ease-out group-hover:translate-x-3.5 group-hover:translate-y-3.5 group-focus-visible:translate-x-3.5 group-focus-visible:translate-y-3.5"
                         />
-                        {/* Photo arch */}
-                        <span className="absolute inset-0 overflow-hidden rounded-t-full bg-gold-soft shadow-md transition-shadow duration-500 group-hover:shadow-xl">
+                        {/* Circular photo */}
+                        <span className="absolute inset-0 overflow-hidden rounded-full bg-gold-soft shadow-md transition-shadow duration-500 group-hover:shadow-xl">
                           {/* Empty alt: the visible name below already labels the link */}
                           <Image
                             src={cat.image?.url || CATEGORY_IMAGES[cat.name] || "/categroy/default.png"}
@@ -143,14 +142,8 @@ export default async function HomePage() {
                         </span>
                       </span>
 
-                      <span className="mt-7 flex items-center justify-between gap-2 font-display text-sm font-extrabold text-ink md:text-base">
-                        <span className="transition-colors duration-300 group-hover:text-gold-deep">
-                          {cat.name}
-                        </span>
-                        <ArrowUpRight
-                          aria-hidden="true"
-                          className="h-5 w-5 shrink-0 text-gold-deep transition duration-300 md:-translate-x-2 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100 md:group-focus-visible:translate-x-0 md:group-focus-visible:opacity-100"
-                        />
+                      <span className="mt-7 block text-center font-display text-sm font-extrabold text-ink transition-colors duration-300 group-hover:text-gold-deep md:text-base">
+                        {cat.name}
                       </span>
                     </Link>
                   </div>
@@ -163,9 +156,9 @@ export default async function HomePage() {
                 delay={Math.min(categories.length, 8) * 90}
                 className="w-[42vw] shrink-0 snap-start sm:w-[28vw] md:w-auto"
               >
-                <div className={categories.length % 2 === 1 ? "md:mt-12" : ""}>
+                <div>
                   <Link href="/products" className="group block">
-                    <span className="relative flex aspect-[3/4] w-full flex-col items-center justify-center gap-3 rounded-t-full border-2 border-dashed border-gold bg-gold-pale text-center transition duration-500 group-hover:border-solid group-hover:bg-gold">
+                    <span className="relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-full border-2 border-dashed border-gold bg-gold-pale text-center transition duration-500 group-hover:border-solid group-hover:bg-gold">
                       <ArrowRight
                         aria-hidden="true"
                         className="h-8 w-8 text-gold-deep transition duration-500 group-hover:translate-x-1.5 group-hover:text-ink"
