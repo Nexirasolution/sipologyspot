@@ -119,16 +119,11 @@ export default async function HomePage() {
                   as="li"
                   key={cat._id}
                   delay={Math.min(i, 8) * 90}
-                  className="w-[42vw] shrink-0 snap-start sm:w-[28vw] md:w-auto"
+                  className="w-[36vw] shrink-0 snap-start sm:w-[24vw] md:w-auto"
                 >
                   <div>
                     <Link href={`/products?category=${cat._id}`} className="group block">
-                      <span className="relative block aspect-square w-full">
-                        {/* Gold outline circle, offset behind the photo */}
-                        <span
-                          aria-hidden="true"
-                          className="absolute inset-0 translate-x-2 translate-y-2 rounded-full border-2 border-gold transition-transform duration-500 ease-out group-hover:translate-x-3.5 group-hover:translate-y-3.5 group-focus-visible:translate-x-3.5 group-focus-visible:translate-y-3.5"
-                        />
+                      <span className="relative mx-auto block aspect-square w-full max-w-[150px] md:max-w-[170px]">
                         {/* Circular photo */}
                         <span className="absolute inset-0 overflow-hidden rounded-full bg-gold-soft shadow-md transition-shadow duration-500 group-hover:shadow-xl">
                           {/* Empty alt: the visible name below already labels the link */}
@@ -154,11 +149,11 @@ export default async function HomePage() {
               <Reveal
                 as="li"
                 delay={Math.min(categories.length, 8) * 90}
-                className="w-[42vw] shrink-0 snap-start sm:w-[28vw] md:w-auto"
+                className="w-[36vw] shrink-0 snap-start sm:w-[24vw] md:w-auto"
               >
                 <div>
                   <Link href="/products" className="group block">
-                    <span className="relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-full border-2 border-dashed border-gold bg-gold-pale text-center transition duration-500 group-hover:border-solid group-hover:bg-gold">
+                    <span className="relative mx-auto flex aspect-square w-full max-w-[150px] md:max-w-[170px] flex-col items-center justify-center gap-3 rounded-full border-2 border-dashed border-gold bg-gold-pale text-center transition duration-500 group-hover:border-solid group-hover:bg-gold">
                       <ArrowRight
                         aria-hidden="true"
                         className="h-8 w-8 text-gold-deep transition duration-500 group-hover:translate-x-1.5 group-hover:text-ink"
