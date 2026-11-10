@@ -124,7 +124,8 @@ export default function AdminProductsPage() {
     setEditingId(p._id);
     setForm({
       name: p.name,
-      sku: p.sku || "",
+      // Older products may have no SKU saved. Give them one now so saving works.
+      sku: p.sku || generateSKU(p.category?._id || ""),
       category: p.category?._id || "",
       price: p.price,
       compareAtPrice: p.compareAtPrice || "",
@@ -208,7 +209,8 @@ export default function AdminProductsPage() {
 
       const payload = {
         ...form,
-        sku: form.sku.trim().toUpperCase(),
+        // Never send an empty SKU: generate one if the field is somehow blank
+        sku: (form.sku.trim() || generateSKU(form.category)).toUpperCase(),
         price: Number(form.price),
         compareAtPrice: Number(form.compareAtPrice) || 0,
         stock: Number(form.stock),
