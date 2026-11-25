@@ -61,7 +61,7 @@ export default function ProductGallery({ media, productName }) {
   return (
     <div>
       <div
-        className="group relative aspect-square touch-pan-y select-none overflow-hidden rounded-xl2 bg-champagne shadow-card"
+        className="group relative aspect-square touch-pan-y select-none overflow-hidden rounded-xl2 bg-surface shadow-card"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onTouchStart={handleTouchStart}
@@ -95,7 +95,7 @@ export default function ProductGallery({ media, productName }) {
               type="button"
               onClick={goPrev}
               aria-label="Previous image"
-              className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-forest opacity-0 shadow-md backdrop-blur transition hover:bg-white group-hover:opacity-100 md:opacity-0"
+              className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-page/80 text-fg opacity-0 shadow-md backdrop-blur transition hover:bg-page focus-visible:opacity-100 group-hover:opacity-100 md:opacity-0"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -103,18 +103,19 @@ export default function ProductGallery({ media, productName }) {
               type="button"
               onClick={goNext}
               aria-label="Next image"
-              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-forest opacity-0 shadow-md backdrop-blur transition hover:bg-white group-hover:opacity-100 md:opacity-0"
+              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-page/80 text-fg opacity-0 shadow-md backdrop-blur transition hover:bg-page focus-visible:opacity-100 group-hover:opacity-100 md:opacity-0"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
 
-            {/* Dots (visible on mobile where hover arrows don't apply) */}
+            {/* Dots (visible on mobile where hover arrows don't apply).
+                They sit on top of the photo, so they stay gold / white in both themes. */}
             <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 md:hidden">
               {media.map((_, index) => (
                 <span
                   key={index}
                   className={`h-1.5 w-1.5 rounded-full transition ${
-                    index === activeIndex ? "bg-forest" : "bg-white/70"
+                    index === activeIndex ? "bg-gold" : "bg-white/70"
                   }`}
                 />
               ))}
@@ -132,14 +133,16 @@ export default function ProductGallery({ media, productName }) {
                 key={item.publicId || index}
                 ref={(el) => (thumbRefs.current[index] = el)}
                 onClick={() => goTo(index)}
+                aria-label={`Show ${itemIsVideo ? "video" : "image"} ${index + 1}`}
+                aria-current={index === activeIndex}
                 className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition ${
-                  index === activeIndex ? "border-forest" : "border-transparent"
+                  index === activeIndex ? "border-gold" : "border-transparent"
                 }`}
               >
                 {itemIsVideo ? (
                   <video src={item.url} className="h-full w-full object-cover" muted />
                 ) : (
-                  <Image src={item.url} alt={`${productName} ${index + 1}`} fill className="object-cover" />
+                  <Image src={item.url} alt="" fill className="object-cover" />
                 )}
               </button>
             );

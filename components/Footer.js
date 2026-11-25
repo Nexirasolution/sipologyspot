@@ -21,7 +21,7 @@ function MeeshoMark({ className }) {
   return <span className={`font-display text-base font-black leading-none ${className}`}>M</span>;
 }
 
-// Small gold circle that holds a decorative icon (hidden from screen readers)
+// Small gold circle that holds a decorative icon (same in both themes)
 function IconDot({ children }) {
   return (
     <span
@@ -62,7 +62,7 @@ export default function Footer({ settings }) {
   const telHref = `tel:${phone.replace(/[^\d+]/g, "")}`;
 
   return (
-    <footer className="bg-gold-pale text-ink">
+    <footer className="bg-surface text-fg transition-colors duration-300">
       {/* Animated gold hairline */}
       <div
         aria-hidden="true"
@@ -85,7 +85,7 @@ export default function Footer({ settings }) {
             </span>
           </Link>
 
-          <p className="mt-6 max-w-md text-base font-medium leading-relaxed text-muted">
+          <p className="mt-6 max-w-md text-base font-medium leading-relaxed text-fg-muted">
             Premium organic products, carefully sourced and delivered fresh from Chennai.
             Natural, wholesome goodness for your everyday living.
           </p>
@@ -115,7 +115,7 @@ export default function Footer({ settings }) {
                 <li key={l.href}>
                   <Link
                     href={l.href}
-                    className={`inline-block font-display text-base font-bold text-ink transition-colors duration-300 hover:text-gold-deep ${UNDERLINE}`}
+                    className={`inline-block font-display text-base font-bold text-fg transition-colors duration-300 hover:text-accent ${UNDERLINE}`}
                   >
                     {l.label}
                   </Link>
@@ -137,7 +137,7 @@ export default function Footer({ settings }) {
                   </IconDot>
                   <a
                     href={telHref}
-                    className={`pt-1.5 font-semibold text-ink transition-colors hover:text-gold-deep ${UNDERLINE}`}
+                    className={`pt-1.5 font-semibold text-fg transition-colors hover:text-accent ${UNDERLINE}`}
                   >
                     <span className="sr-only">Phone: </span>
                     {phone}
@@ -152,7 +152,7 @@ export default function Footer({ settings }) {
                   </IconDot>
                   <a
                     href={`mailto:${email}`}
-                    className={`break-all pt-1.5 font-semibold text-ink transition-colors hover:text-gold-deep ${UNDERLINE}`}
+                    className={`break-all pt-1.5 font-semibold text-fg transition-colors hover:text-accent ${UNDERLINE}`}
                   >
                     <span className="sr-only">Email: </span>
                     {email}
@@ -165,7 +165,7 @@ export default function Footer({ settings }) {
                   <IconDot>
                     <LocationIcon className="h-4 w-4" />
                   </IconDot>
-                  <p className="pt-1.5 font-semibold leading-relaxed text-ink">
+                  <p className="pt-1.5 font-semibold leading-relaxed text-fg">
                     <span className="sr-only">Address: </span>
                     {address}
                   </p>
@@ -175,7 +175,7 @@ export default function Footer({ settings }) {
           </address>
 
           {(settings?.gst || settings?.msme) && (
-            <div className="mt-6 space-y-1 text-sm font-semibold text-muted">
+            <div className="mt-6 space-y-1 text-sm font-semibold text-fg-muted">
               {settings?.gst && <p>GST No: {settings.gst}</p>}
               {settings?.msme && <p>MSME Registration: {settings.msme}</p>}
             </div>
@@ -195,7 +195,7 @@ export default function Footer({ settings }) {
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex h-11 items-center gap-2.5 rounded-full border-2 border-gold bg-white px-5 font-display text-sm font-bold text-ink transition duration-300 hover:-translate-y-1 hover:bg-gold hover:shadow-lg active:scale-95"
+                        className="group flex h-11 items-center gap-2.5 rounded-full border-2 border-gold bg-page px-5 font-display text-sm font-bold text-fg transition duration-300 hover:-translate-y-1 hover:bg-gold hover:text-ink hover:shadow-lg active:scale-95"
                       >
                         <span aria-hidden="true" className="flex">
                           <Icon className="h-4 w-4 transition-transform duration-300 group-hover:scale-125" />
@@ -214,7 +214,7 @@ export default function Footer({ settings }) {
 
       {/* Bottom bar */}
       <div className="border-t border-gold/40">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm font-semibold text-muted md:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm font-semibold text-fg-muted md:flex-row">
           <div className="text-center md:text-left">
             <p>
               © {new Date().getFullYear()} {storeName}. All rights reserved.
@@ -225,7 +225,7 @@ export default function Footer({ settings }) {
                 href="https://www.nexirasolution.in/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`font-bold text-gold-deep hover:text-ink ${UNDERLINE}`}
+                className={`font-bold text-accent hover:text-fg ${UNDERLINE}`}
               >
                 Nexira Solution
                 <NewTabNote />
@@ -233,10 +233,11 @@ export default function Footer({ settings }) {
             </p>
           </div>
 
-          {/* Jumps to the top of the page content; works without JavaScript */}
+          {/* Jumps to the top of the page content; works without JavaScript.
+              Gold border keeps the button visible against the dark footer. */}
           <a
             href="#main-content"
-            className="group flex h-11 items-center gap-2 rounded-full bg-ink px-5 font-display text-sm font-bold text-gold transition duration-300 hover:-translate-y-0.5 hover:bg-gold hover:text-ink active:scale-95"
+            className="group flex h-11 items-center gap-2 rounded-full border-2 border-gold bg-ink px-5 font-display text-sm font-bold text-gold transition duration-300 hover:-translate-y-0.5 hover:bg-gold hover:text-ink active:scale-95"
           >
             Back to top
             <ArrowUp

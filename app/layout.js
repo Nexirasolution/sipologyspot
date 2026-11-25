@@ -21,6 +21,10 @@ const body = Inter({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+/* Runs before first paint so there is no white flash in dark mode.
+   Saved choice wins, otherwise the visitor's system setting. */
+const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","light")}})();`;
+
 export async function generateMetadata() {
   const settings = await getSettings();
   return {
@@ -41,11 +45,14 @@ export default async function RootLayout({ children }) {
 
   if (settings.maintenanceMode) {
     return (
-      <html lang="en" className={`${display.variable} ${body.variable}`}>
-        <body className="flex min-h-screen items-center justify-center bg-white px-5 text-center font-body antialiased">
+      <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+        <head>
+          <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        </head>
+        <body className="flex min-h-screen items-center justify-center bg-page px-5 text-center font-body text-fg antialiased">
           <main id="main-content" tabIndex={-1}>
-            <h1 className="text-3xl font-extrabold text-ink md:text-5xl">{"We'll be back soon"}</h1>
-            <p className="mt-4 font-semibold text-muted">
+            <h1 className="text-3xl font-extrabold text-fg md:text-5xl">{"We'll be back soon"}</h1>
+            <p className="mt-4 font-semibold text-fg-muted">
               {settings.storeName} is currently undergoing maintenance.
             </p>
           </main>
@@ -55,8 +62,11 @@ export default async function RootLayout({ children }) {
   }
 
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body className="pb-16 font-body antialiased md:pb-0">
+    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="bg-page pb-16 font-body text-fg antialiased md:pb-0">
         <A11yProvider>
           <CartProvider>
             {/* The skip link lives in Navbar.jsx, so it is the first focusable item on each page */}

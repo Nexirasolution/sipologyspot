@@ -343,25 +343,25 @@ export default function CheckoutPage() {
         <main id="main-content" tabIndex={-1} className="mx-auto max-w-xl px-5 py-20 text-center md:px-8">
           <span
             aria-hidden="true"
-            className="gc-float mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#1A1408] bg-[#C9A227] text-3xl font-extrabold text-[#1A1408]"
+            className="gc-float mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-ink bg-gold text-3xl font-extrabold text-ink"
           >
             ✓
           </span>
           <h1
             ref={successHeadingRef}
             tabIndex={-1}
-            className="gc-rise gc-underline mt-8 text-4xl font-extrabold text-[#1A1408] md:text-5xl"
+            className="gc-rise gc-underline mt-8 text-4xl font-extrabold text-fg md:text-5xl"
             style={{ "--d": "120ms" }}
           >
             Order Placed!
           </h1>
-          <p className="gc-rise mt-8 font-semibold text-[#6B5A1E]" style={{ "--d": "220ms" }}>
+          <p className="gc-rise mt-8 font-semibold text-fg-muted" style={{ "--d": "220ms" }}>
             Thank you for choosing {settings.storeName || "Abi Foods and Oils"}. Your order number is:
           </p>
-          <p className="gc-rise gc-display mt-3 text-3xl font-extrabold text-[#1A1408]" style={{ "--d": "300ms" }}>
+          <p className="gc-rise gc-display mt-3 text-3xl font-extrabold text-fg" style={{ "--d": "300ms" }}>
             {placedOrder.orderNumber}
           </p>
-          <p className="gc-rise mt-4 text-sm font-semibold text-[#6B5A1E]" style={{ "--d": "380ms" }}>
+          <p className="gc-rise mt-4 text-sm font-semibold text-fg-muted" style={{ "--d": "380ms" }}>
             Save this number, or use your phone number, to track your order anytime.
           </p>
           <div className="gc-rise mt-10 flex flex-wrap justify-center gap-4" style={{ "--d": "460ms" }}>
@@ -385,10 +385,10 @@ export default function CheckoutPage() {
       <Navbar settings={settings} />
 
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-5 py-12 md:px-10 md:py-20">
-        <h1 className="gc-rise gc-underline text-5xl font-extrabold leading-none text-[#1A1408] md:text-6xl">Checkout</h1>
+        <h1 className="gc-rise gc-underline text-5xl font-extrabold leading-none text-fg md:text-6xl">Checkout</h1>
 
         {items.length === 0 ? (
-          <p className="gc-rise mt-14 font-semibold text-[#6B5A1E]" style={{ "--d": "150ms" }}>
+          <p className="gc-rise mt-14 font-semibold text-fg-muted" style={{ "--d": "150ms" }}>
             Your cart is empty.{" "}
             <Link href="/products" className="gc-link font-extrabold">
               Shop now
@@ -404,7 +404,7 @@ export default function CheckoutPage() {
             <div className="space-y-8">
               {/* Summary of problems, with links to each field */}
               {submitted && errorFields.length > 0 && (
-                <div className="gc-rise rounded-2xl border-2 border-[#1A1408] bg-[#FBF6E6] p-5">
+                <div className="gc-rise rounded-2xl border-2 border-fg bg-surface p-5">
                   <h2 className="text-base font-extrabold">Please fix the following</h2>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-sm font-semibold">
                     {errorFields.map((f) => (
@@ -529,12 +529,12 @@ export default function CheckoutPage() {
                 </div>
               </fieldset>
 
-              <p className="text-xs font-semibold text-[#6B5A1E]">
+              <p className="text-xs font-semibold text-fg-muted">
                 You&apos;ll be redirected to Razorpay&apos;s secure checkout to complete payment.
               </p>
 
               {error && (
-                <p role="alert" className="rounded-xl border-2 border-[#1A1408] bg-[#FBF6E6] px-4 py-3 text-sm font-bold">
+                <p role="alert" className="rounded-xl border-2 border-fg bg-surface px-4 py-3 text-sm font-bold">
                   {error}
                 </p>
               )}
@@ -543,7 +543,7 @@ export default function CheckoutPage() {
             {/* Order summary */}
             <aside
               aria-labelledby="summary-title"
-              className="gc-rise gc-summary card-hover h-fit self-start rounded-3xl border border-[#C9A227]/50 bg-white p-7 lg:sticky lg:top-8"
+              className="gc-rise gc-summary card-hover h-fit self-start rounded-3xl border border-gold/50 bg-page p-7 lg:sticky lg:top-8"
               style={{ "--d": "300ms" }}
             >
               <h2 id="summary-title" className="text-2xl font-extrabold">
@@ -552,7 +552,7 @@ export default function CheckoutPage() {
 
               <ul className="mt-5 space-y-3">
                 {items.map((item) => (
-                  <li key={item.lineId} className="flex justify-between gap-3 text-sm font-semibold text-[#3A3114]">
+                  <li key={item.lineId} className="flex justify-between gap-3 text-sm font-semibold text-fg">
                     <span>
                       {item.name}
                       {item.variant?.label && ` (${item.variant.label})`}
@@ -567,7 +567,7 @@ export default function CheckoutPage() {
 
               <div aria-hidden="true" className="leaf-divider my-5" />
 
-              <dl className="space-y-2 text-sm font-semibold text-[#3A3114]">
+              <dl className="space-y-2 text-sm font-semibold text-fg">
                 <div className="flex justify-between">
                   <dt>Subtotal</dt>
                   <dd>{rupees(subtotal)}</dd>
@@ -602,16 +602,16 @@ export default function CheckoutPage() {
 /* Form pieces                                                         */
 /* ------------------------------------------------------------------ */
 
-const labelCls = "mb-1 block text-xs font-extrabold uppercase tracking-wider text-[#6B5A1E]";
+const labelCls = "mb-1 block text-xs font-extrabold uppercase tracking-wider text-fg-muted";
 const inputCls = (hasError) =>
-  `w-full rounded-xl border-2 bg-white px-4 py-3 text-sm font-semibold transition focus:border-[#C9A227] ${
-    hasError ? "border-[#1A1408]" : "border-[#1A1408]/25"
+  `w-full rounded-xl border-2 bg-page px-4 py-3 text-sm font-semibold text-fg transition placeholder:text-fg-muted focus:border-gold ${
+    hasError ? "border-fg" : "border-fg/25"
   }`;
 
 function RequiredMark() {
   return (
     <>
-      <span aria-hidden="true" className="text-[#8A6A00]">
+      <span aria-hidden="true" className="text-accent">
         *
       </span>
       <span className="sr-only">(required)</span>
@@ -621,7 +621,7 @@ function RequiredMark() {
 
 function ErrorText({ id, children }) {
   return (
-    <p id={id} role="alert" className="mt-1.5 text-xs font-bold text-[#1A1408]">
+    <p id={id} role="alert" className="mt-1.5 text-xs font-bold text-fg">
       <span aria-hidden="true">⚠ </span>
       {children}
     </p>
@@ -668,7 +668,7 @@ function Field({
       </label>
       {textarea ? <textarea {...common} rows={3} /> : <input {...common} type={type} inputMode={inputMode} />}
       {hint && (
-        <p id={`hint-${id}`} className="mt-1 text-right text-xs font-semibold text-[#6B5A1E]">
+        <p id={`hint-${id}`} className="mt-1 text-right text-xs font-semibold text-fg-muted">
           {hint}
         </p>
       )}

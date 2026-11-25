@@ -1,4 +1,3 @@
-// components/RelatedProducts.jsx
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 
@@ -8,14 +7,14 @@ export default function RelatedProducts({ products, categoryId }) {
   return (
     <section className="mx-auto max-w-6xl px-5 py-12 md:px-8">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-display text-2xl font-bold text-forest md:text-3xl">
+        <h2 className="font-display text-2xl font-bold text-fg md:text-3xl">
           You May Also Like
         </h2>
 
         {categoryId && (
           <Link
             href={`/products?category=${categoryId}`}
-            className="shrink-0 text-sm font-semibold text-forest transition hover:text-gold-dark"
+            className="shrink-0 text-sm font-semibold text-fg transition hover:text-accent"
           >
             View All →
           </Link>

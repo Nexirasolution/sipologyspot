@@ -51,10 +51,10 @@ const CATEGORY_IMAGES = {
 function SectionHeading({ id, eyebrow, children, center = true }) {
   return (
     <Reveal className={center ? "text-center" : ""}>
-      {eyebrow && <p className="text-sm font-bold text-gold-deep">{eyebrow}</p>}
+      {eyebrow && <p className="text-sm font-bold text-accent">{eyebrow}</p>}
       <h2
         id={id}
-        className="mt-2 font-display text-3xl font-extrabold tracking-tight text-ink md:text-5xl"
+        className="mt-2 font-display text-3xl font-extrabold tracking-tight text-fg md:text-5xl"
       >
         {children}
       </h2>
@@ -77,7 +77,7 @@ export default async function HomePage() {
       <Navbar settings={settings} />
 
       {/* Navbar's skip link jumps here */}
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" tabIndex={-1} className="bg-page text-fg">
         {/* Page title for screen readers. Remove this if HeroSlider already renders an <h1>. */}
         <h1 className="sr-only">
           {settings?.storeName || "Sipology Spot"}: premium organic cold-pressed oils and spices
@@ -99,14 +99,14 @@ export default async function HomePage() {
               Shop by category
             </SectionHeading>
             <Reveal delay={200}>
-              <p className="max-w-xs text-sm font-semibold text-muted md:text-right">
+              <p className="max-w-xs text-sm font-semibold text-fg-muted md:text-right">
                 Choose a category to see every product in it.
               </p>
             </Reveal>
           </div>
 
           {categories.length === 0 ? (
-            <p className="px-5 text-center font-medium text-muted">
+            <p className="px-5 text-center font-medium text-fg-muted">
               Categories will appear here once added from the admin panel.
             </p>
           ) : (
@@ -125,7 +125,7 @@ export default async function HomePage() {
                     <Link href={`/products?category=${cat._id}`} className="group block">
                       <span className="relative mx-auto block aspect-square w-full max-w-[150px] md:max-w-[170px]">
                         {/* Circular photo */}
-                        <span className="absolute inset-0 overflow-hidden rounded-full bg-gold-soft shadow-md transition-shadow duration-500 group-hover:shadow-xl">
+                        <span className="absolute inset-0 overflow-hidden rounded-full bg-surface shadow-md ring-2 ring-gold/40 transition duration-500 group-hover:shadow-xl group-hover:ring-gold">
                           {/* Empty alt: the visible name below already labels the link */}
                           <Image
                             src={cat.image?.url || CATEGORY_IMAGES[cat.name] || "/categroy/default.png"}
@@ -137,7 +137,7 @@ export default async function HomePage() {
                         </span>
                       </span>
 
-                      <span className="mt-7 block text-center font-display text-sm font-extrabold text-ink transition-colors duration-300 group-hover:text-gold-deep md:text-base">
+                      <span className="mt-7 block text-center font-display text-sm font-extrabold text-fg transition-colors duration-300 group-hover:text-accent md:text-base">
                         {cat.name}
                       </span>
                     </Link>
@@ -153,12 +153,12 @@ export default async function HomePage() {
               >
                 <div>
                   <Link href="/products" className="group block">
-                    <span className="relative mx-auto flex aspect-square w-full max-w-[150px] md:max-w-[170px] flex-col items-center justify-center gap-3 rounded-full border-2 border-dashed border-gold bg-gold-pale text-center transition duration-500 group-hover:border-solid group-hover:bg-gold">
+                    <span className="relative mx-auto flex aspect-square w-full max-w-[150px] md:max-w-[170px] flex-col items-center justify-center gap-3 rounded-full border-2 border-dashed border-gold bg-surface text-center transition duration-500 group-hover:border-solid group-hover:bg-gold">
                       <ArrowRight
                         aria-hidden="true"
-                        className="h-8 w-8 text-gold-deep transition duration-500 group-hover:translate-x-1.5 group-hover:text-ink"
+                        className="h-8 w-8 text-accent transition duration-500 group-hover:translate-x-1.5 group-hover:text-ink"
                       />
-                      <span className="px-4 font-display text-sm font-extrabold text-ink md:text-base">
+                      <span className="px-4 font-display text-sm font-extrabold text-fg transition-colors duration-500 group-hover:text-ink md:text-base">
                         All products
                       </span>
                     </span>
@@ -171,7 +171,7 @@ export default async function HomePage() {
 
         {/* Best selling products */}
         {bestSelling.length > 0 && (
-          <section aria-labelledby="best-selling-heading" className="bg-gold-pale py-16 md:py-24">
+          <section aria-labelledby="best-selling-heading" className="bg-surface py-16 md:py-24">
             <div className="mx-auto max-w-7xl px-5 md:px-8">
               <div className="mb-12 flex items-end justify-between gap-4">
                 <SectionHeading
@@ -184,7 +184,7 @@ export default async function HomePage() {
 
                 <Link
                   href="/products"
-                  className="group hidden shrink-0 items-center gap-2 rounded-full border-2 border-gold px-5 py-2.5 font-display text-sm font-bold text-ink transition duration-300 hover:bg-gold md:inline-flex"
+                  className="group hidden shrink-0 items-center gap-2 rounded-full border-2 border-gold px-5 py-2.5 font-display text-sm font-bold text-fg transition duration-300 hover:bg-gold hover:text-ink md:inline-flex"
                 >
                   <span>
                     View all<span className="sr-only"> best selling products</span>
@@ -239,10 +239,10 @@ export default async function HomePage() {
                       <LeafIcon className="h-7 w-7" />
                     </span>
                   </span>
-                  <h3 className="mt-5 font-display text-base font-extrabold text-ink md:text-lg">
+                  <h3 className="mt-5 font-display text-base font-extrabold text-fg md:text-lg">
                     {item.title}
                   </h3>
-                  <p className="mt-1.5 text-sm font-medium text-muted">{item.desc}</p>
+                  <p className="mt-1.5 text-sm font-medium text-fg-muted">{item.desc}</p>
                 </div>
               </Reveal>
             ))}

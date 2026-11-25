@@ -116,11 +116,11 @@ export default function CartPage() {
             <h1
               ref={headingRef}
               tabIndex={-1}
-              className="gc-display gc-rise gc-underline text-5xl font-extrabold leading-none tracking-tight text-[#14110A] md:text-7xl"
+              className="gc-display gc-rise gc-underline text-5xl font-extrabold leading-none tracking-tight text-fg md:text-7xl"
             >
               Your Cart
             </h1>
-            <p className="gc-rise mt-5 text-sm font-semibold text-[#6B5A1E]" style={{ "--d": "150ms" }}>
+            <p className="gc-rise mt-5 text-sm font-semibold text-fg-muted" style={{ "--d": "150ms" }}>
               {items.length === 0
                 ? "Nothing here yet"
                 : `${items.length} ${items.length === 1 ? "item" : "items"} ready for checkout`}
@@ -147,18 +147,18 @@ export default function CartPage() {
           <section aria-labelledby="empty-title" className="mt-20 flex flex-col items-center py-10 text-center">
             <span
               aria-hidden="true"
-              className="gc-float gc-rise flex h-24 w-24 items-center justify-center rounded-full border-2 border-[#C9A227] text-[#8A6A00]"
+              className="gc-float gc-rise flex h-24 w-24 items-center justify-center rounded-full border-2 border-gold text-accent"
             >
               <BagIcon className="h-10 w-10" />
             </span>
             <h2
               id="empty-title"
-              className="gc-display gc-rise mt-8 text-3xl font-extrabold text-[#14110A]"
+              className="gc-display gc-rise mt-8 text-3xl font-extrabold text-fg"
               style={{ "--d": "120ms" }}
             >
               Your cart is empty
             </h2>
-            <p className="gc-rise mt-3 max-w-sm font-semibold text-[#6B5A1E]" style={{ "--d": "220ms" }}>
+            <p className="gc-rise mt-3 max-w-sm font-semibold text-fg-muted" style={{ "--d": "220ms" }}>
               Add something from the shop and it will show up here.
             </p>
             <Link href="/products" className="btn-gold gc-rise mt-10" style={{ "--d": "320ms" }}>
@@ -171,7 +171,7 @@ export default function CartPage() {
               <h2 id="items-title" className="sr-only">
                 Items in your cart
               </h2>
-              <ul className="divide-y divide-[#C9A227]/30 border-y border-[#C9A227]/30">
+              <ul className="divide-y divide-gold/30 border-y border-gold/30">
                 {items.map((item, idx) => {
                   const lineTotal = item.price * item.quantity;
                   return (
@@ -182,7 +182,7 @@ export default function CartPage() {
                       }`}
                       style={{ "--d": `${200 + idx * 90}ms` }}
                     >
-                      <div className="gc-thumb h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-[#FBF6E6]">
+                      <div className="gc-thumb h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-surface">
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -192,23 +192,23 @@ export default function CartPage() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div aria-hidden="true" className="flex h-full items-center justify-center text-[#C9A227]">
+                          <div aria-hidden="true" className="flex h-full items-center justify-center text-gold">
                             <LeafIcon className="h-7 w-7" />
                           </div>
                         )}
                       </div>
 
                       <div className="min-w-[160px] flex-1">
-                        <h3 className="gc-display text-lg font-bold leading-snug text-[#14110A]">
+                        <h3 className="gc-display text-lg font-bold leading-snug text-fg">
                           {item.name}
                           {item.variant?.label && (
-                            <span className="ml-2 inline-block rounded-full bg-[#C9A227] px-2.5 py-0.5 align-middle text-[11px] font-extrabold text-[#14110A]">
+                            <span className="ml-2 inline-block rounded-full bg-gold px-2.5 py-0.5 align-middle text-[11px] font-extrabold text-ink">
                               <span className="sr-only">Variant: </span>
                               {item.variant.label}
                             </span>
                           )}
                         </h3>
-                        <p className="mt-1 text-sm font-semibold text-[#6B5A1E]">
+                        <p className="mt-1 text-sm font-semibold text-fg-muted">
                           {rupees(item.price)} <span aria-hidden="true">/</span>
                           <span className="sr-only"> per </span> {item.unit}
                         </p>
@@ -216,7 +216,7 @@ export default function CartPage() {
                         <div
                           role="group"
                           aria-label={`Quantity for ${item.name}`}
-                          className="mt-3 flex w-fit items-center overflow-hidden rounded-full border-2 border-[#1A1408]"
+                          className="mt-3 flex w-fit items-center overflow-hidden rounded-full border-2 border-fg"
                         >
                           <button
                             type="button"
@@ -229,7 +229,7 @@ export default function CartPage() {
                           {/* key re-mounts the node so the pop animation replays on change */}
                           <span
                             key={item.quantity}
-                            className="gc-pop w-10 text-center text-base font-extrabold"
+                            className="gc-pop w-10 text-center text-base font-extrabold text-fg"
                             aria-label={`Quantity ${item.quantity}`}
                           >
                             {item.quantity}
@@ -246,7 +246,7 @@ export default function CartPage() {
                       </div>
 
                       <div className="ml-auto text-right">
-                        <p key={lineTotal} className="gc-pop gc-display text-2xl font-extrabold text-[#14110A]">
+                        <p key={lineTotal} className="gc-pop gc-display text-2xl font-extrabold text-fg">
                           <span className="sr-only">Line total </span>
                           {rupees(lineTotal)}
                         </p>
@@ -267,14 +267,14 @@ export default function CartPage() {
 
             <aside
               aria-labelledby="summary-title"
-              className="gc-rise gc-summary card-hover h-fit self-start rounded-3xl border border-[#C9A227]/50 bg-white p-8 lg:sticky lg:top-8"
+              className="gc-rise gc-summary card-hover h-fit self-start rounded-3xl border border-gold/50 bg-page p-8 lg:sticky lg:top-8"
               style={{ "--d": "350ms" }}
             >
-              <h2 id="summary-title" className="gc-display text-2xl font-extrabold text-[#14110A]">
+              <h2 id="summary-title" className="gc-display text-2xl font-extrabold text-fg">
                 Order summary
               </h2>
 
-              <dl className="mt-6 space-y-3 text-sm font-semibold text-[#3A3114]">
+              <dl className="mt-6 space-y-3 text-sm font-semibold text-fg">
                 <div className="flex justify-between">
                   <dt>Subtotal</dt>
                   <dd>{rupees(subtotal)}</dd>
@@ -288,8 +288,8 @@ export default function CartPage() {
               <div aria-hidden="true" className="leaf-divider my-6" />
 
               <dl className="flex items-baseline justify-between">
-                <dt className="gc-display text-lg font-extrabold text-[#14110A]">Total</dt>
-                <dd key={subtotal} className="gc-pop gc-display text-3xl font-extrabold text-[#14110A]">
+                <dt className="gc-display text-lg font-extrabold text-fg">Total</dt>
+                <dd key={subtotal} className="gc-pop gc-display text-3xl font-extrabold text-fg">
                   {rupees(subtotal)}
                 </dd>
               </dl>

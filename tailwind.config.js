@@ -8,17 +8,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // New gold + white palette
-        gold: {
-          DEFAULT: "#C9A227", // fills, borders, accents (use dark ink text on top)
-          deep: "#8A6410",    // gold TEXT on white: 5.4:1 contrast (passes WCAG AA)
-          soft: "#F6EBC8",    // hover / active backgrounds
-          pale: "#FCF8EA",    // section backgrounds
-        },
-        ink: "#1A1408",       // bold text
-        muted: "#6B5B2E",     // secondary text: 6.6:1 on white
+        /* ---------- Theme-aware (light/dark) ----------
+           Values live in app/globals.css as CSS variables and change with
+           <html data-theme="light|dark">. */
+        page: "rgb(var(--page) / <alpha-value>)",          // page background
+        fg: "rgb(var(--fg) / <alpha-value>)",              // main text
+        "fg-muted": "rgb(var(--fg-muted) / <alpha-value>)", // secondary text
+        surface: "rgb(var(--surface) / <alpha-value>)",    // alternate section / card background
+        accent: "rgb(var(--accent) / <alpha-value>)",      // gold TEXT (dark gold on light, bright gold on dark)
 
-        // Legacy names remapped so the rest of the store re-themes automatically
+        /* ---------- Gold palette ---------- */
+        gold: {
+          DEFAULT: "#C9A227", // fills, borders, accents (use dark ink text on top). Same in both themes.
+          deep: "rgb(var(--accent) / <alpha-value>)",       // gold TEXT: now theme-aware (was #8A6410)
+          soft: "rgb(var(--gold-soft) / <alpha-value>)",    // hover / active backgrounds: theme-aware (was #F6EBC8)
+          pale: "rgb(var(--surface) / <alpha-value>)",      // section backgrounds: theme-aware (was #FCF8EA)
+        },
+        ink: "#1A1408",                                     // dark text for use ON gold. Same in both themes.
+        muted: "rgb(var(--fg-muted) / <alpha-value>)",      // secondary text: theme-aware (was #6B5B2E)
+
+        // Legacy names (unchanged)
         forest: "#8A6410",
         ivory: "#FFFFFF",
         champagne: "#FBF5E1",

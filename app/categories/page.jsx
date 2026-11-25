@@ -48,15 +48,15 @@ export default async function CategoriesPage({ searchParams }) {
 
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-20">
         <header className="mb-14 max-w-3xl">
-          <p className="gc-rise text-xs font-extrabold uppercase tracking-[0.35em] text-[#8A6A00]">Browse</p>
+          <p className="gc-rise text-xs font-extrabold uppercase tracking-[0.35em] text-accent">Browse</p>
           <h1
-            className="gc-rise gc-underline mt-4 text-4xl font-extrabold leading-[1.05] text-[#1A1408] md:text-6xl"
+            className="gc-rise gc-underline mt-4 text-4xl font-extrabold leading-[1.05] text-fg md:text-6xl"
             style={{ "--d": "120ms" }}
           >
             All Categories
           </h1>
           {allCategories.length > 0 && (
-            <p className="gc-rise mt-8 text-sm font-bold text-[#6B5A1E]" style={{ "--d": "260ms" }}>
+            <p className="gc-rise mt-8 text-sm font-bold text-fg-muted" style={{ "--d": "260ms" }}>
               {allCategories.length} {allCategories.length === 1 ? "category" : "categories"}
               {totalPages > 1 && ` · Page ${currentPage} of ${totalPages}`}
             </p>
@@ -64,7 +64,7 @@ export default async function CategoriesPage({ searchParams }) {
         </header>
 
         {allCategories.length === 0 ? (
-          <p className="font-semibold text-[#6B5A1E]">Categories will appear here once added from the admin panel.</p>
+          <p className="font-semibold text-fg-muted">Categories will appear here once added from the admin panel.</p>
         ) : (
           <>
             <ul className="grid grid-cols-3 gap-x-4 gap-y-10 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
@@ -74,7 +74,7 @@ export default async function CategoriesPage({ searchParams }) {
                     href={`/products?category=${cat._id}`}
                     className="group flex flex-col items-center rounded-2xl p-1"
                   >
-                    <span className="relative block h-24 w-24 overflow-hidden rounded-full border-2 border-[#C9A227] bg-[#FBF6E6] shadow-[0_14px_28px_-16px_rgba(138,100,16,0.6)] transition duration-500 group-hover:-translate-y-1.5 group-hover:scale-105 group-hover:border-[#1A1408] md:h-28 md:w-28">
+                    <span className="relative block h-24 w-24 overflow-hidden rounded-full border-2 border-gold bg-surface shadow-[0_14px_28px_-16px_var(--glow-strong)] transition duration-500 group-hover:-translate-y-1.5 group-hover:scale-105 group-hover:border-fg md:h-28 md:w-28">
                       <Image
                         src={cat.image?.url || CATEGORY_IMAGES[cat.name] || "/categroy/default.png"}
                         alt="" /* decorative: the category name is the link text */
@@ -84,7 +84,7 @@ export default async function CategoriesPage({ searchParams }) {
                       />
                     </span>
 
-                    <span className="gc-link mt-4 text-center text-sm font-extrabold text-[#1A1408] md:text-base">
+                    <span className="gc-link mt-4 text-center text-sm font-extrabold text-fg md:text-base">
                       {cat.name}
                     </span>
                   </Link>
@@ -116,7 +116,7 @@ function Pagination({ currentPage, totalPages }) {
 
         {pages.map((p, i) =>
           p === "..." ? (
-            <li key={`dots-${i}`} aria-hidden="true" className="px-2 text-sm font-bold text-[#6B5A1E]">
+            <li key={`dots-${i}`} aria-hidden="true" className="px-2 text-sm font-bold text-fg-muted">
               …
             </li>
           ) : (
@@ -148,7 +148,7 @@ function PageLink({ page, ariaLabel, active, disabled, children }) {
 
   if (disabled) {
     return (
-      <span aria-disabled="true" aria-label={ariaLabel} className={`${base} border-transparent text-[#1A1408]/30`}>
+      <span aria-disabled="true" aria-label={ariaLabel} className={`${base} border-transparent text-fg/30`}>
         {children}
       </span>
     );
@@ -159,8 +159,8 @@ function PageLink({ page, ariaLabel, active, disabled, children }) {
       href={page <= 1 ? "/categories" : `/categories?page=${page}`}
       aria-label={ariaLabel}
       aria-current={active ? "page" : undefined}
-      className={`${base} border-[#1A1408] hover:-translate-y-0.5 active:scale-95 ${
-        active ? "bg-[#C9A227] text-[#1A1408]" : "bg-white text-[#1A1408] hover:bg-[#FBF6E6]"
+      className={`${base} border-fg hover:-translate-y-0.5 active:scale-95 ${
+        active ? "bg-gold text-ink" : "bg-page text-fg hover:bg-surface"
       }`}
     >
       {children}

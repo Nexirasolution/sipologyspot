@@ -1,4 +1,3 @@
-// components/ProductAccordion.jsx
 "use client";
 
 import { useState } from "react";
@@ -15,13 +14,15 @@ export default function ProductAccordion({ items }) {
           <div key={item.title}>
             <button
               onClick={() => setOpenIndex(isOpen ? -1 : idx)}
+              aria-expanded={isOpen}
               className="flex w-full items-center justify-between py-4 text-left"
             >
-              <span className="font-display text-sm font-semibold text-forest md:text-base">
+              <span className="font-display text-sm font-semibold text-fg md:text-base">
                 {item.title}
               </span>
               <ChevronDown
-                className={`h-4 w-4 shrink-0 text-forest transition-transform duration-300 ${
+                aria-hidden="true"
+                className={`h-4 w-4 shrink-0 text-accent transition-transform duration-300 ${
                   isOpen ? "rotate-180" : ""
                 }`}
               />
@@ -33,7 +34,7 @@ export default function ProductAccordion({ items }) {
               }`}
             >
               <div className="min-h-0">
-                <div className="leading-relaxed text-ink/80">{item.content}</div>
+                <div className="leading-relaxed text-fg/80">{item.content}</div>
               </div>
             </div>
           </div>

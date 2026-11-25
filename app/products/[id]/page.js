@@ -91,7 +91,7 @@ export default async function ProductDetailPage({ params }) {
 
       <main id="product-main" tabIndex={-1} className="mx-auto max-w-6xl px-5 py-10 md:px-10 md:py-16">
         {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="gc-rise text-sm font-semibold text-[#6B5A1E]">
+        <nav aria-label="Breadcrumb" className="gc-rise text-sm font-semibold text-fg-muted">
           <ol className="flex flex-wrap items-center gap-2">
             <li>
               <Link href="/products" className="gc-link">
@@ -106,7 +106,7 @@ export default async function ProductDetailPage({ params }) {
             )}
             <li className="flex items-center gap-2">
               <span aria-hidden="true">/</span>
-              <span aria-current="page" className="font-extrabold text-[#1A1408]">
+              <span aria-current="page" className="font-extrabold text-fg">
                 {product.name}
               </span>
             </li>
@@ -122,7 +122,7 @@ export default async function ProductDetailPage({ params }) {
               <div
                 role="img"
                 aria-label={`No image available for ${product.name}`}
-                className="gc-float-soft flex aspect-square items-center justify-center rounded-3xl border border-[#C9A227]/40 bg-[#FBF6E6] text-[#C9A227]"
+                className="gc-float-soft flex aspect-square items-center justify-center rounded-3xl border border-gold/40 bg-surface text-gold"
               >
                 <LeafIcon className="h-20 w-20" aria-hidden="true" />
               </div>
@@ -132,14 +132,14 @@ export default async function ProductDetailPage({ params }) {
           {/* Core info */}
           <div>
             {product.category?.name && (
-              <p className="gc-rise text-xs font-extrabold uppercase tracking-[0.3em] text-[#8A6A00]" style={{ "--d": "150ms" }}>
+              <p className="gc-rise text-xs font-extrabold uppercase tracking-[0.3em] text-accent" style={{ "--d": "150ms" }}>
                 {product.category.name}
               </p>
             )}
 
             <h1
               id="product-title"
-              className="gc-rise gc-underline mt-3 text-4xl font-extrabold leading-tight text-[#1A1408] md:text-5xl"
+              className="gc-rise gc-underline mt-3 text-4xl font-extrabold leading-tight text-fg md:text-5xl"
               style={{ "--d": "220ms" }}
             >
               {product.name}
@@ -149,23 +149,23 @@ export default async function ProductDetailPage({ params }) {
                 size-specific price inside ProductDetailActions. */}
             {!product.hasVariants && (
               <div className="gc-rise mt-8 flex flex-wrap items-baseline gap-x-4 gap-y-2" style={{ "--d": "320ms" }}>
-                <p className="gc-display text-4xl font-extrabold text-[#1A1408]">
+                <p className="gc-display text-4xl font-extrabold text-fg">
                   <span className="sr-only">Price: </span>
                   {rupees(product.price)}
                 </p>
                 {onSale && (
                   <>
-                    <p className="text-base font-semibold text-[#6B5A1E]">
+                    <p className="text-base font-semibold text-fg-muted">
                       <span className="sr-only">Original price: </span>
                       <del>{rupees(product.compareAtPrice)}</del>
                     </p>
-                    <p className="rounded-full bg-[#C9A227] px-3 py-1 text-xs font-extrabold text-[#1A1408]">
+                    <p className="rounded-full bg-gold px-3 py-1 text-xs font-extrabold text-ink">
                       Save {savePercent}%
                       <span className="sr-only"> off the original price</span>
                     </p>
                   </>
                 )}
-                <p className="text-sm font-semibold text-[#6B5A1E]">
+                <p className="text-sm font-semibold text-fg-muted">
                   <span aria-hidden="true">/ </span>
                   <span className="sr-only">per </span>
                   {product.unit}
@@ -174,7 +174,7 @@ export default async function ProductDetailPage({ params }) {
             )}
 
             {!inStock && (
-              <p role="status" className="gc-rise mt-5 inline-block rounded-full border-2 border-[#1A1408] px-4 py-1.5 text-sm font-extrabold" style={{ "--d": "380ms" }}>
+              <p role="status" className="gc-rise mt-5 inline-block rounded-full border-2 border-fg px-4 py-1.5 text-sm font-extrabold" style={{ "--d": "380ms" }}>
                 Currently unavailable
               </p>
             )}
@@ -200,7 +200,7 @@ export default async function ProductDetailPage({ params }) {
 
 function Tag({ label }) {
   return (
-    <li className="gc-tag rounded-full border border-[#C9A227]/60 bg-[#FBF6E6] px-4 py-1.5 text-xs font-extrabold text-[#1A1408]">
+    <li className="gc-tag rounded-full border border-gold/60 bg-surface px-4 py-1.5 text-xs font-extrabold text-fg">
       {label}
     </li>
   );

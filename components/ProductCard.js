@@ -82,7 +82,7 @@ export default function ProductCard({ product }) {
   return (
     <article
       aria-labelledby={titleId}
-      className="card-hover group relative flex h-full flex-col overflow-hidden rounded-3xl border border-gold/20 bg-white focus-within:shadow-[0_18px_40px_-18px_rgba(138,100,16,0.45)]"
+      className="card-hover group relative flex h-full flex-col overflow-hidden rounded-3xl border border-gold/20 bg-page focus-within:shadow-[0_18px_40px_-18px_var(--glow)]"
     >
       {/* Photo. Same destination as the title, so it's hidden from keyboard and screen readers
           to avoid announcing the same link twice. Mouse and touch users can still tap it. */}
@@ -90,7 +90,7 @@ export default function ProductCard({ product }) {
         href={`/products/${product.slug}`}
         tabIndex={-1}
         aria-hidden="true"
-        className="relative block aspect-square overflow-hidden bg-gold-soft"
+        className="relative block aspect-square overflow-hidden bg-surface"
       >
         {image ? (
           mediaType === "video" ? (
@@ -118,19 +118,19 @@ export default function ProductCard({ product }) {
             />
           )
         ) : (
-          <div className="flex h-full items-center justify-center text-gold-deep/40">
+          <div className="flex h-full items-center justify-center text-accent/40">
             <LeafIcon className="h-10 w-10 transition-transform duration-500 group-hover:rotate-12 sm:h-12 sm:w-12" />
           </div>
         )}
 
         {/* Visual badges. Their meaning is repeated for screen readers in the text below. */}
         {outOfStock && (
-          <span className="absolute left-3 top-3 rounded-full border border-ink/20 bg-white/95 px-3 py-1 font-display text-xs font-bold text-ink">
+          <span className="absolute left-3 top-3 rounded-full border border-fg/20 bg-page/95 px-3 py-1 font-display text-xs font-bold text-fg">
             Out of stock
           </span>
         )}
         {!outOfStock && hasDiscount && (
-          <span className="absolute right-3 top-3 origin-center rounded-full bg-ink px-3 py-1 font-display text-xs font-extrabold text-gold shadow-md transition duration-300 group-hover:-rotate-3 group-hover:scale-110">
+          <span className="absolute right-3 top-3 origin-center rounded-full border border-gold bg-ink px-3 py-1 font-display text-xs font-extrabold text-gold shadow-md transition duration-300 group-hover:-rotate-3 group-hover:scale-110">
             {discountPercent}% off
           </span>
         )}
@@ -138,12 +138,12 @@ export default function ProductCard({ product }) {
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         {product.category?.name && (
-          <p className="text-xs font-bold text-gold-deep">{product.category.name}</p>
+          <p className="text-xs font-bold text-accent">{product.category.name}</p>
         )}
 
         <h3
           id={titleId}
-          className="mt-1 line-clamp-2 min-h-[2.75rem] font-display text-base font-extrabold leading-snug text-ink sm:min-h-[3rem] sm:text-lg"
+          className="mt-1 line-clamp-2 min-h-[2.75rem] font-display text-base font-extrabold leading-snug text-fg sm:min-h-[3rem] sm:text-lg"
         >
           <Link
             href={`/products/${product.slug}`}
@@ -163,17 +163,17 @@ export default function ProductCard({ product }) {
         <div className="mt-auto flex items-end justify-between gap-3 pt-4">
           <div className="min-w-0">
             <p className="flex flex-wrap items-baseline gap-x-2">
-              <span className="font-display text-lg font-extrabold text-ink sm:text-xl">
+              <span className="font-display text-lg font-extrabold text-fg sm:text-xl">
                 <span className="sr-only">Price: </span>
                 {priceText}
               </span>
               {showCompare && (
-                <del className="text-xs font-semibold text-muted">
+                <del className="text-xs font-semibold text-fg-muted">
                   <span className="sr-only">, was </span>₹{discountCompareAtPrice}
                 </del>
               )}
             </p>
-            <p className="mt-0.5 text-xs font-semibold text-muted">
+            <p className="mt-0.5 text-xs font-semibold text-fg-muted">
               {hasVariants
                 ? `${product.variants.length} ${product.variants.length === 1 ? "size" : "sizes"}`
                 : product.unit}
@@ -183,7 +183,7 @@ export default function ProductCard({ product }) {
           {hasVariants ? (
             <Link
               href={`/products/${product.slug}`}
-              className="group/btn flex h-11 shrink-0 items-center gap-1.5 rounded-full border-2 border-gold px-4 font-display text-xs font-bold text-ink transition duration-300 hover:bg-gold active:scale-95"
+              className="group/btn flex h-11 shrink-0 items-center gap-1.5 rounded-full border-2 border-gold px-4 font-display text-xs font-bold text-fg transition duration-300 hover:bg-gold hover:text-ink active:scale-95"
             >
               <span>
                 View options<span className="sr-only"> for {product.name}</span>
@@ -202,7 +202,7 @@ export default function ProductCard({ product }) {
                 aria-label={
                   outOfStock ? `${product.name} is out of stock` : `Add ${product.name} to cart`
                 }
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-ink hover:text-gold hover:shadow-lg active:scale-90 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-gold-soft disabled:text-muted disabled:shadow-none"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-gold bg-gold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-ink hover:text-gold hover:shadow-lg active:scale-90 disabled:translate-y-0 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-surface disabled:text-fg-muted disabled:shadow-none"
               >
                 <span key={added ? "done" : "bag"} aria-hidden="true" className="animate-pop">
                   {added ? <Check className="h-5 w-5" strokeWidth={3} /> : <BagIcon className="h-5 w-5" />}

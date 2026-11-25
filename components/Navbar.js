@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { BagIcon } from "./Icons";
+import ThemeToggle from "./ThemeToggle";
 import { Pause, Play, Search, X } from "lucide-react";
 
 const LINKS = [
@@ -26,12 +27,16 @@ function splitStoreName(name) {
   return [name, ""];
 }
 
-// Visible keyboard focus everywhere (WCAG 2.4.7)
+// Visible keyboard focus everywhere (WCAG 2.4.7). Follows the theme.
 const FOCUS =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-white";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-page";
+
+// Same, for controls that sit on the gold announcement bar (gold is the same in both themes)
+const FOCUS_ON_GOLD =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-gold";
 
 // 44px touch target (WCAG 2.5.5)
-const ICON_BTN = `flex h-11 w-11 items-center justify-center rounded-full border border-gold/50 text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-gold hover:shadow-lg active:scale-95 ${FOCUS}`;
+const ICON_BTN = `flex h-11 w-11 items-center justify-center rounded-full border border-gold/50 text-fg transition duration-300 hover:-translate-y-0.5 hover:bg-gold hover:text-ink hover:shadow-lg active:scale-95 ${FOCUS}`;
 
 /* ------------------------------------------------------------------ */
 /* Announcement bar: scrolling for sighted users, a plain list for     */
@@ -79,7 +84,7 @@ function AnnouncementBar({ settings }) {
         type="button"
         onClick={() => setPaused((p) => !p)}
         aria-label={paused ? "Play scrolling announcements" : "Pause scrolling announcements"}
-        className={`mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-300 hover:bg-ink hover:text-gold active:scale-90 ${FOCUS} focus-visible:ring-offset-gold`}
+        className={`mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-300 hover:bg-ink hover:text-gold active:scale-90 ${FOCUS_ON_GOLD}`}
       >
         {paused ? (
           <Play className="h-3.5 w-3.5" aria-hidden="true" />
@@ -199,12 +204,12 @@ export default function Navbar({ settings }) {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search products"
         autoComplete="off"
-        className="w-full min-w-0 bg-transparent text-sm font-semibold text-ink outline-none placeholder:font-medium placeholder:text-muted md:w-52"
+        className="w-full min-w-0 bg-transparent text-sm font-semibold text-fg outline-none placeholder:font-medium placeholder:text-fg-muted md:w-52"
       />
       <button
         type="submit"
         aria-label="Submit search"
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold text-ink transition duration-300 hover:bg-ink hover:text-gold active:scale-90 ${FOCUS}`}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold text-ink transition duration-300 hover:bg-ink hover:text-gold hover:ring-2 hover:ring-gold active:scale-90 ${FOCUS}`}
       >
         <Search className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -216,7 +221,7 @@ export default function Navbar({ settings }) {
       {/* Skip link: first focusable element on every page (add id="main-content" to <main>) */}
       <a
         href="#main-content"
-        className="sr-only z-[60] rounded-full bg-gold px-5 py-3 font-display text-sm font-bold text-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-ink"
+        className="sr-only z-[60] rounded-full bg-gold px-5 py-3 font-display text-sm font-bold text-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-fg"
       >
         Skip to main content
       </a>
@@ -229,8 +234,8 @@ export default function Navbar({ settings }) {
       <AnnouncementBar settings={settings} />
 
       <header
-        className={`sticky top-0 z-40 animate-nav-drop bg-white/90 backdrop-blur-md transition-shadow duration-500 ${
-          scrolled ? "shadow-[0_12px_32px_-16px_rgba(138,100,16,0.45)]" : ""
+        className={`sticky top-0 z-40 animate-nav-drop bg-page/90 backdrop-blur-md transition-shadow duration-500 ${
+          scrolled ? "shadow-[0_12px_32px_-16px_var(--glow)]" : ""
         }`}
       >
         <div
@@ -251,11 +256,11 @@ export default function Navbar({ settings }) {
               }`}
             />
             <span className="block leading-tight">
-              <span className="block font-display text-xl font-extrabold tracking-tight text-ink md:text-2xl">
+              <span className="block font-display text-xl font-extrabold tracking-tight text-fg md:text-2xl">
                 {brand}
               </span>
               {tagline && (
-                <span className="block text-xs font-bold text-gold-deep">
+                <span className="block text-xs font-bold text-accent">
                   {tagline}
                 </span>
               )}
@@ -276,8 +281,8 @@ export default function Navbar({ settings }) {
                     <Link
                       href={l.href}
                       aria-current={active ? "page" : undefined}
-                      className={`group relative inline-block rounded px-1 py-2 font-display text-[15px] font-bold transition-colors duration-300 hover:text-gold-deep ${
-                        active ? "text-gold-deep" : "text-ink"
+                      className={`group relative inline-block rounded px-1 py-2 font-display text-[15px] font-bold transition-colors duration-300 hover:text-accent ${
+                        active ? "text-accent" : "text-fg"
                       } ${FOCUS}`}
                     >
                       {l.label}
@@ -300,7 +305,7 @@ export default function Navbar({ settings }) {
             {searchOpen &&
               searchForm(
                 "d",
-                "hidden origin-right animate-expand items-center gap-1 rounded-full border border-gold bg-white py-1 pl-4 pr-1 shadow-sm md:flex"
+                "hidden origin-right animate-expand items-center gap-1 rounded-full border border-gold bg-page py-1 pl-4 pr-1 shadow-sm md:flex"
               )}
 
             <button
@@ -317,10 +322,13 @@ export default function Navbar({ settings }) {
               </span>
             </button>
 
+            {/* Light / dark switch: header on desktop, inside the menu on mobile (saves room) */}
+            <ThemeToggle className={`${ICON_BTN} hidden md:flex`} />
+
             <Link
               href="/cart"
               aria-label={cartLabel}
-              className={`relative flex h-11 w-11 items-center justify-center rounded-full bg-gold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-ink hover:text-gold hover:shadow-lg active:scale-95 ${FOCUS}`}
+              className={`relative flex h-11 w-11 items-center justify-center rounded-full bg-gold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-ink hover:text-gold hover:shadow-lg hover:ring-2 hover:ring-gold active:scale-95 ${FOCUS}`}
             >
               <span aria-hidden="true">
                 <BagIcon className="h-5 w-5" />
@@ -329,7 +337,7 @@ export default function Navbar({ settings }) {
                 <span
                   key={count}
                   aria-hidden="true"
-                  className="absolute -right-1 -top-1 flex h-5 min-w-5 animate-pop items-center justify-center rounded-full bg-ink px-1 text-[11px] font-extrabold text-white"
+                  className="absolute -right-1 -top-1 flex h-5 min-w-5 animate-pop items-center justify-center rounded-full bg-fg px-1 text-[11px] font-extrabold text-page"
                 >
                   {count}
                 </span>
@@ -347,17 +355,17 @@ export default function Navbar({ settings }) {
             >
               <span aria-hidden="true" className="flex h-4 w-5 flex-col justify-between">
                 <span
-                  className={`block h-0.5 w-5 rounded bg-ink transition-all duration-300 ${
+                  className={`block h-0.5 w-5 rounded bg-current transition-all duration-300 ${
                     open ? "translate-y-[7px] rotate-45" : ""
                   }`}
                 />
                 <span
-                  className={`block h-0.5 w-5 rounded bg-ink transition-all duration-300 ${
+                  className={`block h-0.5 w-5 rounded bg-current transition-all duration-300 ${
                     open ? "scale-x-0 opacity-0" : ""
                   }`}
                 />
                 <span
-                  className={`block h-0.5 w-5 rounded bg-ink transition-all duration-300 ${
+                  className={`block h-0.5 w-5 rounded bg-current transition-all duration-300 ${
                     open ? "-translate-y-[7px] -rotate-45" : ""
                   }`}
                 />
@@ -370,7 +378,7 @@ export default function Navbar({ settings }) {
         {searchOpen &&
           searchForm(
             "m",
-            "mx-5 mb-3 flex animate-slide-down items-center gap-2 rounded-full border border-gold bg-white py-1 pl-5 pr-1 shadow-sm md:hidden"
+            "mx-5 mb-3 flex animate-slide-down items-center gap-2 rounded-full border border-gold bg-page py-1 pl-5 pr-1 shadow-sm md:hidden"
           )}
 
         {/* Mobile menu */}
@@ -378,7 +386,7 @@ export default function Navbar({ settings }) {
           <nav
             id={`${uid}-menu`}
             aria-label="Mobile"
-            className="animate-slide-down border-t border-gold/30 bg-white px-5 py-4 md:hidden"
+            className="animate-slide-down border-t border-gold/30 bg-page px-5 py-4 md:hidden"
           >
             <ul className="flex flex-col gap-1">
               {LINKS.map((l, i) => {
@@ -394,7 +402,7 @@ export default function Navbar({ settings }) {
                       onClick={() => setOpen(false)}
                       aria-current={active ? "page" : undefined}
                       className={`flex items-center justify-between rounded-2xl px-4 py-3.5 font-display text-lg font-bold transition duration-300 hover:bg-gold-soft active:scale-[0.98] ${
-                        active ? "bg-gold-soft text-gold-deep" : "text-ink"
+                        active ? "bg-gold-soft text-accent" : "text-fg"
                       } ${FOCUS}`}
                     >
                       {l.label}
@@ -405,6 +413,17 @@ export default function Navbar({ settings }) {
                   </li>
                 );
               })}
+
+              {/* Theme switch (mobile) */}
+              <li
+                className="animate-rise border-t border-gold/30 pt-1"
+                style={{ animationDelay: `${LINKS.length * 80}ms` }}
+              >
+                <ThemeToggle
+                  showLabel
+                  className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 font-display text-lg font-bold text-fg transition duration-300 hover:bg-gold-soft active:scale-[0.98] ${FOCUS}`}
+                />
+              </li>
             </ul>
           </nav>
         )}
